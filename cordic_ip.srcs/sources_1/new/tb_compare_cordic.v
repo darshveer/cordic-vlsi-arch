@@ -10,6 +10,7 @@ module tb_compare_cordic;
     wire signed [15:0] x_ip, y_ip;
 
     real cos_c, sin_c, cos_ip, sin_ip;
+    real cos_abs, sin_abs, rad;
     real scale_custom, scale_ip;
 
     // Custom CORDIC
@@ -43,14 +44,16 @@ module tb_compare_cordic;
         y_in = 0;
         
         // Custom CORDIC uses standard full gain
-        scale_custom = 1; 
+        scale_custom = 1.0; 
         // Vivado IP skips i=0 stage (1.64676 / sqrt(2))
         scale_ip     = 1.16443;     
 
         #100;
 
-        // Expanded header to include Sine
-        $display("Deg | Cos(Cust) | Cos(IP)   | Diff(Cos) | Sin(Cust) | Sin(IP)   | Diff(Sin)");
+        // Expanded header to include Ideal values and respective errors
+        $display("============================================================================================================================");
+        $display("Deg | Cos(Ideal) | Cos(Cust) | Cos(IP)   | Err(Cust) | Err(IP)   || Sin(Ideal) | Sin(Cust) | Sin(IP)   | Err(Cust) | Err(IP)  ");
+        $display("============================================================================================================================");
 
         test(0);
         test(30);
@@ -64,10 +67,17 @@ module tb_compare_cordic;
     task test(input integer deg);
     begin
         angle_in = deg * 1024;
+        
+        // Convert degrees to radians for ideal calculation
+        rad = deg * (3.14159265358979 / 180.0);
 
         // Allow deep IP pipeline to fully settle
         repeat (40) @(posedge clk);
         #1;
+
+        // Calculate Ideal Values
+        cos_abs = $cos(rad);
+        sin_abs = $sin(rad);
 
         // Calculate Cosine (from x_out)
         cos_c  = (x_custom / 16384.0) / scale_custom;
@@ -77,9 +87,11 @@ module tb_compare_cordic;
         sin_c  = (y_custom / 16384.0) / scale_custom;
         sin_ip = (y_ip / 16384.0) / scale_ip;
 
-        // Expanded display statement
-        $display("%3d | %9.5f | %9.5f | %9.6f | %9.5f | %9.5f | %9.6f",
-                 deg, cos_c, cos_ip, (cos_c - cos_ip), sin_c, sin_ip, (sin_c - sin_ip));
+        // Comprehensive display statement
+        $display("%3d | %10.5f | %9.5f | %9.5f | %9.6f | %9.6f || %10.5f | %9.5f | %9.5f | %9.6f | %9.6f",
+                 deg, 
+                 cos_abs, cos_c, cos_ip, (cos_c - cos_abs), (cos_ip - cos_abs),
+                 sin_abs, sin_c, sin_ip, (sin_c - sin_abs), (sin_ip - sin_abs));
     end
     endtask
     

@@ -41,4 +41,4 @@ EAStep()
      fi
 }
 
-EAStep vivado -log top_cordic_ip.vds -m64 -product Vivado -mode batch -messageDb vivado.pb -notrace -source top_cordic_ip.tcl
+EAStep vivado -log top_cordic.vds -m64 -product Vivado -mode batch -messageDb vivado.pb -notrace -source top_cordic.tcl
